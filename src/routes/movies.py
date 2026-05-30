@@ -3,16 +3,16 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
+from starlette import status
 
 from database import get_db, MovieModel
 from database.models import (
     CountryModel, GenreModel, ActorModel, LanguageModel
 )
 from schemas.movies import (
-    MovieBaseSchema, MovieListResponseSchema, MovieResponseSchema, MovieUpdateSchema
+    MovieBaseSchema, MovieListResponseSchema, MovieResponseSchema, MovieUpdateSchema, MovieCreateSchema
 )
 
 
@@ -90,12 +90,12 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.post("/movies/", response_model=MovieResponseSchema)
+@router.post("/movies/", response_model=MovieCreateSchema)
 async def create_movie(
         payload: MovieBaseSchema, db: AsyncSession = Depends(get_db)
 ):
     if payload.date > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=400,detail="Invalid input data.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
     db_movie = select(MovieModel).where(
         MovieModel.name == payload.name,
@@ -127,20 +127,20 @@ async def create_movie(
     await db.flush()
 
     genres = []
-    for g in payload.genres:
-        genre = await get_or_create(db, GenreModel, "name", g)
+    for gen in payload.genres:
+        genre = await get_or_create(db, GenreModel, "name", gen)
         genres.append(genre)
     movie.genres = genres
 
     actors = []
-    for a in payload.actors:
-        actor = await get_or_create(db, ActorModel, "name", a)
+    for act in payload.actors:
+        actor = await get_or_create(db, ActorModel, "name", act)
         actors.append(actor)
     movie.actors = actors
 
     languages = []
-    for l in payload.languages:
-        language = await get_or_create(db, LanguageModel, "name", l)
+    for lan in payload.languages:
+        language = await get_or_create(db, LanguageModel, "name", lan)
         languages.append(language)
     movie.languages = languages
 
@@ -180,7 +180,7 @@ async def update_movie(
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
-@router.delete("/movies/{movie_id}/", response_model=MovieResponseSchema)
+@router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     query = select(MovieModel).where(MovieModel.id == movie_id)
     result = await db.execute(query)
@@ -188,7 +188,8 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     if not movie:
         raise HTTPException(
-            status_code=404, detail="Movie with the given ID was not found."
+            status_code=404,
+            detail="Movie with the given ID was not found."
         )
 
     await db.delete(movie)
