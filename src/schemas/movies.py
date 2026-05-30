@@ -1,4 +1,4 @@
-from datetime import date
+import datetime
 from typing import List
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -39,7 +39,7 @@ class LanguageSchema(BaseModel):
 class MovieBaseSchema(BaseModel):
     id: int
     name: str
-    date: date
+    date: datetime.date
     score: float
     overview: str
 
@@ -49,7 +49,7 @@ class MovieBaseSchema(BaseModel):
 class MovieResponseSchema(BaseModel):
     id: int
     name: str
-    date: date
+    date: datetime.date
     score: float
     overview: str
     status: str
@@ -74,7 +74,7 @@ class MovieListResponseSchema(BaseModel):
 
 class MovieCreateSchema(BaseModel):
     name: str = Field(max_length=255)
-    date: date
+    date: datetime.date
     score: float = Field(ge=0, le=100)
     overview: str
     status: str
@@ -88,7 +88,7 @@ class MovieCreateSchema(BaseModel):
 
 class MovieUpdateSchema(BaseModel):
     name: str | None = Field(default=None, max_length=255)
-    date: date | None = None
+    date: datetime.date | None = None
     score: float | None = Field(default=None, ge=0, le=100)
     overview: str | None = None
     status: str | None = None
