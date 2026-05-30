@@ -92,7 +92,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/movies/", response_model=MovieCreateSchema)
 async def create_movie(
-        payload: MovieBaseSchema, db: AsyncSession = Depends(get_db)
+        payload: MovieCreateSchema, db: AsyncSession = Depends(get_db)
 ):
     if payload.date > date.today() + timedelta(days=365):
         raise HTTPException(status_code=400, detail="Invalid input data.")
@@ -106,7 +106,7 @@ async def create_movie(
 
     if existing:
         raise HTTPException(
-            status_code=409, detail= (
+            status_code=409, detail=(
                 f"A movie with the name '{payload.name}' "
                 f"and release date '{payload.date}' already exists."
             )
